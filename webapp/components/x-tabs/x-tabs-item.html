@@ -1,0 +1,59 @@
+<!-- import polymer-element -->
+<link rel="import"  href="../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="x-tabs-item">
+
+	<template strip-whitespace>
+		<style>
+		:host {
+			display: inherit;
+			contain: content;
+		}
+		</style>
+		
+		<slot></slot>
+	</template>
+
+	<script>
+	class XTabsItem extends Polymer.Element {
+		static get is() {
+			return "x-tabs-item";
+		}
+
+		constructor() {
+			super();
+		}
+		
+		ready() {
+			super.ready();
+		}
+		
+		connectedCallback() {
+			super.connectedCallback();
+		}
+
+		disconnectedCallback() {
+			super.disconnectedCallback();
+		}
+		
+		static get properties() {
+			return {
+				label : {
+					type : String,
+					reflectToAttribute : true,
+					notify : true
+				},
+				selected : {
+					type : Boolean,
+					value : false,
+					reflectToAttribute : true,
+					notify : true
+				}
+			};
+		}
+	}
+
+	customElements.define(XTabsItem.is, XTabsItem);
+	</script>
+
+</dom-module>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<script src="bower_components/webcomponentsjs/webcomponents-loader.js"></script>
+	<link rel="import" href="components/x-tabs/x-tabs.html">
+</head>
+<body>
+	<x-tabs>
+		<x-tabs-item label="Aba 1">
+			<p>Um parágrafo</p>
+		</x-tabs-item>
+		<x-tabs-item label="Aba 2" selected>
+			<h1>Um título</h1>
+		</x-tabs-item>
+		<x-tabs-item label="Aba 3" selected>
+			<span>Um texto qualquer</span>
+		</x-tabs-item>
+		
+		
+		<p>Um parágrafo que será removido por não ser um x-tabs-item</p>
+	</x-tabs>
+</body>
+</html>
