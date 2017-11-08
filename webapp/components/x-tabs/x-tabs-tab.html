@@ -1,7 +1,7 @@
 <!-- import polymer-element -->
 <link rel="import"  href="../../bower_components/polymer/polymer-element.html">
 
-<dom-module id="x-tabs-item">
+<dom-module id="x-tabs-tab">
 
 	<template strip-whitespace>
 		<style>
@@ -9,15 +9,19 @@
 			display: inherit;
 			contain: content;
 		}
+		
+		label {
+			margin: auto;
+		}
 		</style>
 		
-		<slot></slot>
+		<label>[[label]]</label>
 	</template>
 
 	<script>
-	class XTabsItem extends Polymer.Element {
+	class XTabsTab extends Polymer.Element {
 		static get is() {
-			return "x-tabs-item";
+			return "x-tabs-tab";
 		}
 
 		constructor() {
@@ -40,35 +44,30 @@
 			return {
 				label : {
 					type : String,
-					reflectToAttribute : true,
-					notify : true
+					reflectToAttribute : true
 				},
 				selected : {
 					type : Boolean,
-					value : false,
-					reflectToAttribute : true,
-					notify : true
+					reflectToAttribute : true
 				},
 				ref : {
 					type : String,
-					value : XTabsItem._genUUID,
+					reflectToAttribute : true
+				},
+				order : {
+					type : Number,
 					reflectToAttribute : true,
-					readOnly : true
+					observer : "_onOrderChange"
 				}
 			};
 		}
 		
-		static _genUUID() {
-			let d = new Date().getTime();
-			let uuid = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace( /[xy]/g, c => {
-				let r = (d + Math.random()*16)%16 | 0;
-				return (c=="x" ? r : (r&0x3|0x8)).toString(16);
-			});
-			return uuid;
+		_onOrderChange(order) {
+			this.style.order = order;
 		}
 	}
 
-	customElements.define(XTabsItem.is, XTabsItem);
+	customElements.define(XTabsTab.is, XTabsTab);
 	</script>
 
 </dom-module>

@@ -3,6 +3,7 @@
 <link rel="import" href="../../bower_components/polymer/lib/utils/flattened-nodes-observer.html">
 
 <link rel="import" href="./x-tabs-item.html">
+<link rel="import" href="./x-tabs-tab.html">
 
 <dom-module id="x-tabs">
 
@@ -11,28 +12,50 @@
 		:host {
 			display: block;
 			contain: content;
+			
+			--tab-background: lightgray;
+			--tab-color: back;
+			
+			--content-padding: 0px 10px;
+			--content-border: 1px solid black;
+		}
+		
+		#tabs {
+			display: flex;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: flex-start;
+			flex-wrap: nowrap;
 		}
 		
 		#tabs > * {
-			display: inline-block;
+			box-sizing: border-box;
 			cursor: pointer;
 			padding: 10px;
-			background-color: lightgray;
 			border: 1px solid black;
 			border-radius: 2px;
+			min-width: 60px;
+			
+			background: var(--tab-background);
+			color: var(--tab-color);
 		}
 		
-		#tabs > :not(:first-child) {
+		#tabs > :not([order='0']) {
 			margin-left: 2px;
 		}
 		
 		#tabs > [selected] {
-			background-color: whitesmoke;
+			filter: contrast(130%) brightness(110%) saturate(120%) drop-shadow(0px 0px 2px gray);
 			cursor: default;
 		}
 		
 		#items {
+			box-sizing: border-box;
 			margin-top: 6px;
+			border-radius: 2px;
+			
+			padding: var(--content-padding);
+			border: var(--content-border);
 		}
 		
 		#items ::slotted(*) {
@@ -72,8 +95,10 @@
 			
 			this._observerChildNode = new Polymer.FlattenedNodesObserver( this, info => {
 				this._removeInvalidChildren(info.addedNodes);
-				this._bindAddedChildrenListener(info.addedNodes);
-				this._bindRemovedChildrenListener(info.removedNodes);
+				this._handleAddedChildren(info.addedNodes);
+				this._handleRemovedChildren(info.removedNodes);
+				
+				this._recalcTabOrder();
 			});
 		}
 
@@ -81,25 +106,7 @@
 			super.disconnectedCallback();
 			this._observerChildNode.disconnect();
 		}
-		
-		_onChangeTabLabel(item) {
-			if (item.assignedSlot) {
-				let index = Array.prototype.indexOf.call(item.assignedSlot.assignedNodes(), item);
-				this.$.tabs.children[index].innerText = item.label;
-			}
-		}
-		
-		_onChangeSelectedItem(item) {
-			if (item.selected && item.assignedSlot) {
-				let index = Array.prototype.indexOf.call(item.assignedSlot.assignedNodes(), item);
-				
-				for (let node of this.$.tabs.children) { 
-					node.removeAttribute("selected");
-				}
-				
-				this.$.tabs.children[index].setAttribute("selected","selected");
-			}
-		}
+	
 		
 		_removeInvalidChildren(nodes) {
 			nodes
@@ -107,51 +114,66 @@
 				.forEach( item => item.remove() );
 		}
 		
-		_bindAddedChildrenListener(nodes) {
-			let selectedItem;
-			nodes
-				.filter( item => item.localName === XTabsItem.is )
-				.forEach( (item, index) => {
-					item.addEventListener( "label-changed", e => this._onChangeTabLabel(e.target) );
-					item.addEventListener( "selected-changed", e => this._onChangeSelectedItem(e.target) );
-					this._createTab( item.label );
-					
-					if (item.selected) {
-						if (selectedItem) {
-							item.selected = false;
-						}
-						else {
-							selectedItem = item;
-							this.$.tabs.children[index].setAttribute("selected","selected");
-						}
-					}
-				});
+		_recalcTabOrder() {
+			for (let tab of this.$.tabs.children) {
+				let item = this.querySelector(`[ref='${tab.ref}']`);
+				let order = Array.prototype.indexOf.call(this.$.slot.assignedNodes(), item);
+				tab.order = order;
+			}
 		}
 		
-		_bindRemovedChildrenListener(nodes) {
+		_handleAddedChildren(nodes) {
+			nodes = nodes.filter( item => item.localName === XTabsItem.is );
+			
+			nodes
+				.forEach( (item,index) => {
+					item.addEventListener( "label-changed", e => this._onChangeTabLabel(e.target) );
+					item.addEventListener( "selected-changed", e => this._onChangeSelectedItem(e.target) );
+					this._createTab(item.label, item.ref, item.selected);
+				});
+
+			
+			nodes //garante que só o primeiro item selected vai ficar marcado
+				.filter( item => item.selected )
+				.forEach( (item, index) => item.selected = index === 0 );
+		}
+		
+		_handleRemovedChildren(nodes) {
 			nodes
 				.filter( item => item.localName === XTabsItem.is )
 				.forEach( item => {
-					let index = Array.prototype.indexOf.call(item.assignedSlot.assignedNodes(), item);
-					this.$.tabs.children[index].remove();
+					this.$.tabs.querySelector(`[ref='${item.ref}']`).remove();
 				});
 		}
 		
-		_createTab(label) {
-			let tab = document.createElement("label");
-			tab.innerText = label;
-			tab.addEventListener("click", e => {
+		_createTab(label, ref, selected) {
+			let tab = document.createElement("x-tabs-tab");
+			tab.label = label;
+			tab.selected = selected;
+			tab.ref = ref;
+			
+			tab.addEventListener( "click", e => {
+				let item = this.querySelector("[selected]");
+				item.selected = false;
+				
 				let selectedTab = e.target;
-				let index = Array.prototype.indexOf.call(this.$.tabs.children, selectedTab);
-				
-				this.$.slot.assignedNodes()
-					.filter( item => item.selected )
-					.forEach( item => item.selected = false );
-				
-				this.$.slot.assignedNodes()[index].selected = true;
+				item = this.querySelector(`[ref='${selectedTab.ref}']`);
+				item.selected = true;
 			});
 			
 			this.$.tabs.appendChild(tab);
+		}
+		
+		_onChangeTabLabel(item) {
+			let tab = this.$.tabs.querySelector(`[ref='${item.ref}']`);
+			if (tab) {
+				tab.innerText = item.label;
+			}
+		}
+		
+		_onChangeSelectedItem(item) {
+			let tab = this.$.tabs.querySelector(`[ref='${item.ref}']`);
+			tab.selected = item.selected;
 		}
 	}
 
