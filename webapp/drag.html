@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<script src="bower_components/webcomponentsjs/webcomponents-loader.js"></script>
+	
+	<link rel="import" href="components/elementables/x-draggable.html">
+	
+	<style>
+	#content {
+		position: relative;
+		display:inline-block;
+		width:800px;
+		height:800px;
+		border:1px solid black;
+	}	
+	</style>
+</head>
+<body>
+	<div id="content">
+		<x-draggable x="100" y="100" w="300" h="300"><label>I'm draggable. Golly!</label></x-draggable>
+		<x-draggable x="10" y="10" w="80" h="80"><label>HBD</label></x-draggable>
+	</div> 
+</body>
+</html>
