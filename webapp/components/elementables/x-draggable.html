@@ -1,0 +1,198 @@
+<!-- import polymer-element -->
+<link rel="import"  href="../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="x-draggable">
+
+	<template strip-whitespace>
+		<style>
+		
+		:host {
+			position: absolute;
+			display: inline-flex;
+			flex-direction: row;
+			justify-content: center;
+			align-items: center;
+			contain: content;
+			box-sizing: border-box;
+			cursor: pointer;
+			user-select: none;
+			
+			border: 1px dashed lightgray;
+		}
+		
+		:host([selected]) {
+			border: 1px solid black;
+		}
+		
+		::slotted(*) {
+			cursor: inherit;
+			pointer-events: none;
+		}
+		</style>
+		<slot></slot>
+	</template>
+
+	<script>
+	class XDraggable extends Polymer.Element {
+		static get is() {
+			return "x-draggable";
+		}
+		
+		static get minW() {
+			return 10;
+		}
+		
+		static get minH() {
+			return 10;
+		}
+		
+		constructor() {
+			super();
+		}
+		
+		ready() {
+			super.ready();
+			
+			this.addEventListener("mousedown", XDraggable._onGrab);
+		}
+		
+		connectedCallback() {
+			super.connectedCallback();
+		}
+
+		disconnectedCallback() {
+			super.disconnectedCallback();
+		}
+		
+		static get properties() {
+			return {
+				selected : {
+					type : Boolean,
+					value : false,
+					reflectToAttribute : true,
+					notify : true
+				},
+				x : {
+					type : Number,
+					value : 0,
+					reflectToAttribute : true,
+					notify : true,
+					observer : "_onChangeX"
+				},
+				y : {
+					type : Number,
+					value : 0,
+					reflectToAttribute : true,
+					notify : true,
+					observer : "_onChangeY"
+				},
+				w : {
+					type : Number,
+					value : XDraggable.minW,
+					reflectToAttribute : true,
+					notify : true,
+					observer : "_onChangeW"
+				},
+				h : {
+					type : Number,
+					value : XDraggable.minH,
+					reflectToAttribute : true,
+					notify : true,
+					observer : "_onChangeH"
+				},
+				z : {
+					type : Number,
+					value : 0,
+					reflectToAttribute : true,
+					notify : true,
+					observer : "_onChangeZ"
+				}
+			};
+		}
+		
+		_onChangeX(x) {
+			this.style.left = `${x}px`;
+		}
+		
+		_onChangeY(y) {
+			this.style.top = `${y}px`;
+		}
+		
+		_onChangeW(w) {
+			w = Math.max(XDraggable.minW, w);
+			this.style.width = `${w}px`;
+		}
+		
+		_onChangeH(h) {
+			h = Math.max(XDraggable.minH, h);
+			this.style.height = `${h}px`;
+		}
+		
+		_onChangeZ(z) {
+			this.style.zIndex = z;
+		}
+		
+		//methods
+		move(dx, dy) {
+			if (dx !== 0) this.x += dx;
+			if (dy !== 0) this.y += dy;
+		}
+		
+		//event listeners
+		static _onGrab(e) {
+			if (e.which === 1) {
+				e.stopPropagation();
+				
+				this.selected = true;
+				
+				XDraggable._grabbed = {
+					drag : {
+						x : e.clientX,
+						y : e.clientY
+					},
+					target : this
+				};
+				document.addEventListener("mousemove", XDraggable._onDrag);
+			}
+		}
+		
+		static _onUnclick(e) {
+			this.querySelectorAll("x-draggable[selected]").forEach(element => element.selected = false);
+		}
+		
+		static _onDrag(e) {
+			if (XDraggable._grabbed && e.which === 1) {
+				let dx = e.clientX - XDraggable._grabbed.drag.x;
+				let dy = e.clientY - XDraggable._grabbed.drag.y;
+				
+				dx = Math.trunc(dx/XDraggable.minW);
+				dy = Math.trunc(dy/XDraggable.minH);
+				
+				if ( dx !== 0 ) XDraggable._grabbed.drag.x = e.clientX;
+				if ( dy !== 0 ) XDraggable._grabbed.drag.y = e.clientY;
+				
+				//criar um x-sandbox para conter os x-draggables
+				//notificar o pai que há um evento de drag em andamento para ele tomar as providência de chamar o move em cada elemento selecionado (a seleção pertence ao pai)
+				document.querySelectorAll("x-draggable[selected]").forEach( element => element.move(dx*XDraggable.minW, dy*XDraggable.minH) );
+			}
+		}
+		
+		static _onRelease(e) {
+			if (XDraggable._grabbed && e.which === 1) {
+				e.preventDefault();
+				XDraggable._grabbed = null;
+			}
+		}
+	}
+	
+	customElements.define(XDraggable.is, XDraggable);
+	
+	
+	//post definitions
+	document.addEventListener("mouseup", XDraggable._onRelease);
+	document.addEventListener("mousedown", XDraggable._onUnclick);
+	
+	XDraggable._grabbed = null;
+	</script>
+
+</dom-module>
