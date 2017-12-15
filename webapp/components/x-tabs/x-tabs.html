@@ -232,12 +232,14 @@
 		}
 		
 		remove(...indexes) {
-			indexes
+			indexes = Array.from(indexes
 				.filter(index => Number.isInteger(index))
 				.map(index => index < 0 ? this.childElementCount+index : index)
 				.filter(index => index < this.childElementCount)
-				.reduce((set, index) => set.add(index), new Set())
-				.forEach(index => this.children[index].remove());
+				.reduce((set, index) => set.add(index), new Set()))
+				.sort((a,b) => b-a);
+			
+			indexes.forEach(index => this.children[index].remove());
 		}
 		
 		
