@@ -10,15 +10,25 @@
 	<template strip-whitespace>
 		<style>
 		:host {
-			display: block;
+			display: flex;
+			flex-direction: column;
 			contain: content;
 			
 			--tab-width: auto;
-			--tab-background: lightgray;
-			--tab-color: black;
+			--tab-spacing: .2em;
+			--tab-padding: .8em;
+			--tab-radius: 6px;
 			
-			--content-padding: 0px 10px;
-			--content-border: 1px solid black;
+			--tab-border-color: #c5c5c5;
+			--tab-background: #f3f3f3;
+			--tab-color: #454545;
+			
+			--tab-selected-intensity: 110%;
+			--tab-selected-color: #454545;
+			
+			--content-padding: 4px 10px;
+			--content-border: 1px solid #c5c5c5;
+			--content-radius: 2px;
 		}
 		
 		#container {
@@ -31,7 +41,7 @@
 		
 		#container > * {
 			box-sizing: border-box;
-			max-width: 100%;
+			width: 100%;
 		}
 		
 		#tabs {
@@ -46,38 +56,44 @@
 		#tabs > * {
 			box-sizing: border-box;
 			cursor: pointer;
-			padding: 10px;
-			border: 1px solid black;
-			border-radius: 2px;
 			overflow-x: hidden;
+			box-shadow: inset 0px -2px 6px rgba(140,140,140,.3);
 			
 			width: var(--tab-width);
+			padding: var(--tab-padding);
+			border-radius: var(--tab-radius) var(--tab-radius) 0px 0px;
+			border: 1px solid var(--tab-border-color);
+			border-bottom: none;
 			background: var(--tab-background);
 			color: var(--tab-color);
 		}
 		
 		#tabs > :not([order='0']) {
-			margin-left: 2px;
+			margin-left: var(--tab-spacing);
 		}
 		
 		#tabs > [selected] {
-			filter: contrast(130%) brightness(110%) saturate(120%) drop-shadow(0px 0px 2px gray);
 			cursor: default;
+			color: var(--tab-selected-color);
+			filter: brightness(var(--tab-selected-intensity));
+			box-shadow: inset 0px -2px 6px rgba(140,140,140,.3), 0px 2px 6px rgba(140,140,140,.3);
+		}
+		
+		#tabs > :not([selected]):hover {
+			filter: brightness(98%);
 		}
 		
 		#items {
 			overflow-y: auto;
-			margin-top: 6px;
-			border-radius: 2px;
 			flex-grow: 1; /* stretches to bottom */
 			
 			padding: var(--content-padding);
 			border: var(--content-border);
+			border-radius: 0px var(--content-radius) var(--content-radius) var(--content-radius);
 		}
 		
 		#items ::slotted(*) {
 			display: none;
-			
 		}
 		
 		#items ::slotted([selected]) {
@@ -124,7 +140,7 @@
 			super.disconnectedCallback();
 			this._observerChildNode.disconnect();
 		}
-	
+		
 		
 		_removeInvalidChildren(nodes) {
 			nodes
@@ -134,8 +150,8 @@
 		
 		_recalcTabOrder() {
 			for (let tab of this.$.tabs.children) {
-				let item = this.querySelector(`[ref='${tab.ref}']`);
-				let order = Array.prototype.indexOf.call(this.$.slot.assignedNodes(), item);
+				let item = this.querySelector(`[refid='${tab.refid}']`);
+				let order = this.$.slot.assignedNodes().indexOf(item);
 				tab.order = order;
 			}
 		}
@@ -147,11 +163,10 @@
 				.forEach( (item,index) => {
 					item.addEventListener( "label-changed", e => this._onChangeTabLabel(e.target) );
 					item.addEventListener( "selected-changed", e => this._onChangeSelectedItem(e.target) );
-					this._createTab(item.label, item.ref, item.selected);
+					this._createTab(item.label, item.refid, item.selected);
 				});
-
 			
-			nodes //garante que só o primeiro item selected vai ficar marcado
+			nodes //makes sure only the first selected item will remain selected
 				.filter( item => item.selected )
 				.forEach( (item, index) => item.selected = index === 0 );
 		}
@@ -160,22 +175,22 @@
 			nodes
 				.filter( item => item.localName === XTabsItem.is )
 				.forEach( item => {
-					this.$.tabs.querySelector(`[ref='${item.ref}']`).remove();
+					this.$.tabs.querySelector(`[refid='${item.refid}']`).remove();
 				});
 		}
 		
-		_createTab(label, ref, selected) {
+		_createTab(label, refid, selected) {
 			let tab = document.createElement("x-tabs-tab");
 			tab.label = label;
 			tab.selected = selected;
-			tab.ref = ref;
+			tab.refid = refid;
 			
 			tab.addEventListener( "click", e => {
 				let item = this.querySelector("[selected]");
 				item.selected = false;
 				
 				let selectedTab = e.target;
-				item = this.querySelector(`[ref='${selectedTab.ref}']`);
+				item = this.querySelector(`[refid='${selectedTab.refid}']`);
 				item.selected = true;
 			});
 			
@@ -183,15 +198,97 @@
 		}
 		
 		_onChangeTabLabel(item) {
-			let tab = this.$.tabs.querySelector(`[ref='${item.ref}']`);
+			let tab = this.$.tabs.querySelector(`[refid='${item.refid}']`);
 			if (tab) {
 				tab.innerText = item.label;
 			}
 		}
 		
 		_onChangeSelectedItem(item) {
-			let tab = this.$.tabs.querySelector(`[ref='${item.ref}']`);
+			let tab = this.$.tabs.querySelector(`[refid='${item.refid}']`);
 			tab.selected = item.selected;
+		}
+		
+		
+		get length() {
+			return this.childElementCount;
+		}
+		
+		add(...jsons) {
+			return jsons
+				.filter(json => json && typeof(json) === "object" && json.label)
+				.map(json => {
+					let item = document.createElement("x-tabs-item");
+					item.label = json.label;
+					if (json.nodes) {
+						let nodes = typeof json.nodes !== "string" && typeof json.nodes[Symbol.iterator] === "function" ? json.nodes : [json.nodes];
+						nodes.forEach(node => item.append(node));
+					}
+					
+					this.appendChild(item);
+					
+					return this.childElementCount-1;
+				});
+		}
+		
+		remove(...indexes) {
+			indexes
+				.filter(index => Number.isInteger(index))
+				.map(index => index < 0 ? this.childElementCount+index : index)
+				.filter(index => index < this.childElementCount)
+				.reduce((set, index) => set.add(index), new Set())
+				.forEach(index => this.children[index].remove());
+		}
+		
+		
+		select(indexOrName) {
+			if (typeof indexOrName === "number") {
+				return this.selectByIndex(indexOrName);
+			}
+			
+			if (typeof indexOrName === "string") {
+				return this.selectByName(indexOrName);
+			}
+			
+			return false;
+		}
+		
+		selectByIndex(index) {
+			if (!Number.isInteger(index)) return false;
+			
+			index = index < 0 ? this.childElementCount+index : index;
+			
+			if (index >= this.childElementCount) return false;
+			
+			let currentlySelected = this.querySelector("[selected]");
+			let newlySelected = this.children[index];
+			
+			if (currentlySelected !== newlySelected)  {
+				currentlySelected.selected = false;
+				newlySelected.selected = true;
+				return true;
+			}
+			
+			return false;
+		}
+		
+		selectByName(name) {
+			if (typeof name !== "string" || name.trim() === "") return false;
+			
+			name = name.trim();
+			
+			let newlySelected = Array.prototype.find.call(this.children, item => item.name === name);
+			
+			if (newlySelected == null) return false;
+						
+			let currentlySelected = this.querySelector("[selected]");
+			if (currentlySelected !== newlySelected)  {
+				currentlySelected.selected = false;
+				newlySelected.selected = true;
+				return true;
+			}
+			
+			return false;
 		}
 	}
 

@@ -49,13 +49,21 @@
 					reflectToAttribute : true,
 					notify : true
 				},
-				ref : {
+				name : {
+					type : String,
+					computed : "_getName(label)"
+				},
+				refid : {
 					type : String,
 					value : XTabsItem._genUUID,
 					reflectToAttribute : true,
 					readOnly : true
 				}
 			};
+		}
+		
+		_getName(label) {
+			return label.trim().toLowerCase();
 		}
 		
 		static _genUUID() {

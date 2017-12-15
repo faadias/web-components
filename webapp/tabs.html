@@ -8,17 +8,22 @@
 	
 	<style>
 	x-tabs {
-		--tab-background: wheat;
-		--tab-color: darkred;
-		
-		--content-padding: 4px 10px;
-		--content-border: 1px solid darkred;
-		
 		max-width: 600px;
 		height: 200px;
 		
 		font-family: verdana;
 		font-size: 0.8em;
+	}
+	
+	section {
+		counter-reset: section;
+		display: flex;
+		flex-direction: column;
+	}
+	
+	section > p::after {
+		counter-increment: section;
+		content: " "counter(section);
 	}
 	</style>
 </head>
@@ -39,6 +44,24 @@
 		<x-tabs-item label="Cimento">
 			<h3>Artigo 4</h3>
 			<p>Integer massa ligula, pulvinar a lorem non, pellentesque elementum sem. Nunc metus lectus, semper sit amet blandit id, sollicitudin nec metus.</p>
+		</x-tabs-item>
+		<x-tabs-item label="Lista">
+			<section>
+				<p>Item</p>
+				<p>Item</p>
+				<p>Item</p>
+				<p>Item</p>
+				<p>Item</p>
+				<p>Item</p>
+				<p>Item</p>
+				<p>Item</p>
+				<p>Item</p>
+				<p>Item</p>
+				<p>Item</p>
+				<p>Item</p>
+				<p>Item</p>
+				<p>Item</p>
+			</section>
 		</x-tabs-item>
 		
 		
