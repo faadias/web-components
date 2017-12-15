@@ -232,14 +232,24 @@
 		}
 		
 		remove(...indexes) {
-			indexes = Array.from(indexes
-				.filter(index => Number.isInteger(index))
-				.map(index => index < 0 ? this.childElementCount+index : index)
-				.filter(index => index < this.childElementCount)
-				.reduce((set, index) => set.add(index), new Set()))
-				.sort((a,b) => b-a);
+			if (this.childElementCount === 1) return;
 			
-			indexes.forEach(index => this.children[index].remove());
+			indexes = Array.from(
+				indexes
+					.filter(index => Number.isInteger(index))
+					.map(index => index < 0 ? this.childElementCount+index : index)
+					.filter(index => index < this.childElementCount)
+					.reduce((set, index) => set.add(index), new Set())
+			)
+			.sort((a,b) => b-a);
+			
+			indexes.forEach(index => {
+				let item = this.children[index];
+				if (item.selected) {
+					this.children[(index+1)%this.childElementCount].selected = true;
+				}
+				item.remove();
+			});
 		}
 		
 		
