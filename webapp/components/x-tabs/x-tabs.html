@@ -122,6 +122,7 @@
 		
 		ready() {
 			super.ready();
+			this._selectDefault();
 		}
 		
 		connectedCallback() {
@@ -141,6 +142,15 @@
 			this._observerChildNode.disconnect();
 		}
 		
+		
+		_selectDefault() {
+			if (this.childElementCount === 0) return;
+			
+			let selectedItem = Array.from(this.children).find(item => item.selected);
+			if (!selectedItem) {
+				this.children[0].selected = true;
+			}
+		}
 		
 		_removeInvalidChildren(nodes) {
 			nodes
@@ -185,7 +195,7 @@
 			tab.selected = selected;
 			tab.refid = refid;
 			
-			tab.addEventListener( "click", e => {
+			tab.addEventListener("click", e => {
 				let item = this.querySelector("[selected]");
 				item.selected = false;
 				
@@ -220,6 +230,9 @@
 				.map(json => {
 					let item = document.createElement("x-tabs-item");
 					item.label = json.label;
+					if (json.name) {
+						item.name = json.name;
+					}
 					if (json.nodes) {
 						let nodes = typeof json.nodes !== "string" && typeof json.nodes[Symbol.iterator] === "function" ? json.nodes : [json.nodes];
 						nodes.forEach(node => item.append(node));
@@ -231,9 +244,20 @@
 				});
 		}
 		
-		remove(...indexes) {
-			if (this.childElementCount === 1) return;
+		remove(...indexesOrNames) {
+			let indexes = [];
+			let names = [];
 			
+			indexesOrNames.forEach(indexOrName => {
+				if (typeof indexOrName === "number") indexes.push(indexOrName);
+				else if (typeof indexOrName === "string") names.push(indexOrName);
+			});
+			
+			this.removeByIndex(...indexes);
+			this.removeByName(...names);
+		}
+		
+		removeByIndex(...indexes) {
 			indexes = Array.from(
 				indexes
 					.filter(index => Number.isInteger(index))
@@ -246,10 +270,24 @@
 			indexes.forEach(index => {
 				let item = this.children[index];
 				if (item.selected) {
-					this.children[(index+1)%this.childElementCount].selected = true;
+					let next = this.children[(index+1)%this.childElementCount];
+					if (next) {
+						next.selected = true;
+					}
 				}
 				item.remove();
 			});
+		}
+		
+		removeByName(...names) {
+			let items = Array.from(this.children);
+			
+			let indexes = names
+				.filter(name => typeof name === "string")
+				.map(name => items.findIndex(item => item.name === name))
+				.filter(index => index >= 0);
+			
+			this.removeByIndex(...indexes);
 		}
 		
 		

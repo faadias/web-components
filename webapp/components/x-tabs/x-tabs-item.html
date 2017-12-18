@@ -26,6 +26,7 @@
 		
 		ready() {
 			super.ready();
+			this.name = this.name || this.label.trim().toLowerCase();
 		}
 		
 		connectedCallback() {
@@ -50,8 +51,7 @@
 					notify : true
 				},
 				name : {
-					type : String,
-					computed : "_getName(label)"
+					type : String
 				},
 				refid : {
 					type : String,
@@ -60,10 +60,6 @@
 					readOnly : true
 				}
 			};
-		}
-		
-		_getName(label) {
-			return label.trim().toLowerCase();
 		}
 		
 		static _genUUID() {
