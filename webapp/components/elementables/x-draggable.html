@@ -120,12 +120,12 @@
 		
 		_onChangeW(w) {
 			w = Math.max(XDraggable.minW, w);
-			this.style.width = `${w}px`;
+			this.style.width = `${w+1}px`;
 		}
 		
 		_onChangeH(h) {
 			h = Math.max(XDraggable.minH, h);
-			this.style.height = `${h}px`;
+			this.style.height = `${h+1}px`;
 		}
 		
 		_onChangeZ(z) {
@@ -134,8 +134,31 @@
 		
 		//methods
 		move(dx, dy) {
-			if (dx !== 0) this.x += dx;
-			if (dy !== 0) this.y += dy;
+			let newX = this.x + dx;
+			let newY = this.y + dy;
+			
+			if (newX < 0) {
+				this.x = 0;
+			}
+			else if (newX+this.w > this.parentElement.offsetWidth) {
+				this.x = this.parentElement.offsetWidth - this.w - 1;
+			}
+			else {
+				this.x = newX;
+			}
+			
+			if (newY < 0) {
+				this.y = 0;
+			}
+			else if (newY+this.w > this.parentElement.offsetHeight) {
+				this.y = this.parentElement.offsetHeight - this.h - 1;
+			}
+			else {
+				this.y = newY;
+			}
+			
+			//if (this.x+dx >= 0 && this.x+dx+this.w <= this.parentElement.offsetWidth) this.x += dx;
+			//if (this.y+dy >= 0 && this.y+dy+this.h <= this.parentElement.offsetHeight) this.y += dy;
 		}
 		
 		//event listeners
@@ -143,13 +166,16 @@
 			if (e.which === 1) {
 				e.stopPropagation();
 				
+				if (!this.selected && !e.ctrlKey && !e.shiftKey) {
+					document.querySelectorAll("x-draggable[selected]")
+						.forEach(element => element.selected = false);
+				}
+				
 				this.selected = true;
 				
 				XDraggable._grabbed = {
-					drag : {
-						x : e.clientX,
-						y : e.clientY
-					},
+					x : this.x - e.clientX,
+					y : this.y - e.clientY,
 					target : this
 				};
 				document.addEventListener("mousemove", XDraggable._onDrag);
@@ -157,23 +183,20 @@
 		}
 		
 		static _onUnclick(e) {
-			this.querySelectorAll("x-draggable[selected]").forEach(element => element.selected = false);
+			document.querySelectorAll("x-draggable[selected]").forEach(element => element.selected = false);
 		}
 		
 		static _onDrag(e) {
 			if (XDraggable._grabbed && e.which === 1) {
-				let dx = e.clientX - XDraggable._grabbed.drag.x;
-				let dy = e.clientY - XDraggable._grabbed.drag.y;
+				let newX = ((e.clientX + XDraggable._grabbed.x)/XDraggable.minW | 0)*XDraggable.minW;
+				let newY = ((e.clientY + XDraggable._grabbed.y)/XDraggable.minH | 0)*XDraggable.minH;
 				
-				dx = Math.trunc(dx/XDraggable.minW);
-				dy = Math.trunc(dy/XDraggable.minH);
-				
-				if ( dx !== 0 ) XDraggable._grabbed.drag.x = e.clientX;
-				if ( dy !== 0 ) XDraggable._grabbed.drag.y = e.clientY;
+				let dx = newX - XDraggable._grabbed.target.x; //target.x e target.y atualizados pela chamada do move abaixo
+				let dy = newY - XDraggable._grabbed.target.y;
 				
 				//criar um x-sandbox para conter os x-draggables
 				//notificar o pai que há um evento de drag em andamento para ele tomar as providência de chamar o move em cada elemento selecionado (a seleção pertence ao pai)
-				document.querySelectorAll("x-draggable[selected]").forEach( element => element.move(dx*XDraggable.minW, dy*XDraggable.minH) );
+				document.querySelectorAll("x-draggable[selected]").forEach( element => element.move(dx, dy) );
 			}
 		}
 		

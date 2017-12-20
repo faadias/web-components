@@ -7,19 +7,88 @@
 	<link rel="import" href="components/elementables/x-draggable.html">
 	
 	<style>
-	#content {
+	:root {
+		--page-width: 210mm;
+		--page-height: 297mm;
+		--page-margins: 10mm;
+	}
+	
+	html,
+	body
+	{
+		margin: 0;
+		padding: 0;
+	}
+	
+	.page {
 		position: relative;
-		display:inline-block;
-		width:800px;
-		height:800px;
-		border:1px solid black;
-	}	
+		box-sizing: border-box;
+		display: inline-flex;
+		justify-content: center;
+		align-items: center;
+		width: var(--page-width);
+		height: var(--page-height);
+		padding: var(--page-margins);
+		
+		background-color: wheat;
+	}
+	
+	.grid {
+		position: relative;
+		display: inline-block;
+		box-sizing: border-box;
+		width: 711px; /* calcular baseado no step */
+		height: 1041px; /* calcular baseado no step */
+		overflow: hidden;
+		
+		background-color: aliceblue;
+	}
+	
+	@page { /* tells chrome not to include margins on its own when printing */
+		margin: 0px;
+	}
+	
+	@media print {
+		.page, .grid {
+			background: none !important;
+		}
+	}
 	</style>
 </head>
-<body>
-	<div id="content">
-		<x-draggable x="100" y="100" w="300" h="300"><label>I'm draggable. Golly!</label></x-draggable>
-		<x-draggable x="10" y="10" w="80" h="80"><label>HBD</label></x-draggable>
-	</div> 
-</body>
+<body
+	><div class="page"
+		><div class="grid"
+			><x-draggable x="100" y="100" w="300" h="300"><label>I'm draggable. Golly!</label></x-draggable
+			><x-draggable x="10" y="10" w="80" h="80"><label>HBD</label></x-draggable
+		></div
+	></div 
+></body>
+<script>
+function createBackground(step) {
+	let xmlns = "http://www.w3.org/2000/svg";
+
+	let svg = document.createElementNS(xmlns, "svg");
+	svg.setAttribute("xmlns", xmlns);
+	svg.setAttributeNS(null, "width", step);
+	svg.setAttributeNS(null, "height", step);
+	svg.style.background = "transparent";
+	
+	let dot = document.createElementNS(xmlns, "rect");
+	dot.setAttributeNS (null, "x", "0");
+	dot.setAttributeNS (null, "y", "0");
+	dot.setAttributeNS (null, "width", "1px");
+	dot.setAttributeNS (null, "height", "1px");
+	dot.setAttributeNS (null, "fill", "#bbb");
+
+	svg.appendChild(dot);
+	
+	let div = document.createElement("div");
+	div.appendChild(svg.cloneNode(true));
+	
+	let b64 = window.btoa(div.innerHTML);
+	return `url("data:image/svg+xml;base64,${b64}")`;
+}
+
+document.getElementsByClassName("grid")[0].style.backgroundImage = createBackground(10);
+</script>
 </html>
