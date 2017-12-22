@@ -37,11 +37,15 @@
 		position: relative;
 		display: inline-block;
 		box-sizing: border-box;
-		width: 711px; /* calcular baseado no step */
-		height: 1041px; /* calcular baseado no step */
+		width: 710px; /* calcular baseado no step */
+		height: 1040px; /* calcular baseado no step */
 		overflow: hidden;
 		
 		background-color: aliceblue;
+	}
+	
+	label {
+		text-align: center;
 	}
 	
 	@page { /* tells chrome not to include margins on its own when printing */
@@ -58,8 +62,8 @@
 <body
 	><div class="page"
 		><div class="grid"
-			><x-draggable x="100" y="100" w="300" h="300" dx="30" dy="30"><label>I'm draggable. Golly!</label></x-draggable
-			><x-draggable x="10" y="10" w="80" h="80" dx="10" dy="10"><label>HBD</label></x-draggable
+			><x-draggable x="100" y="100" w="300" h="300" dx="30" dy="30"><label>I move 30x30</label></x-draggable
+			><x-draggable x="10" y="10" w="80" h="80" dx="10" dy="10"><label>I move 10x10</label></x-draggable
 		></div
 	></div 
 ></body>

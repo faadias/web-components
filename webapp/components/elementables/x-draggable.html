@@ -22,6 +22,7 @@
 		
 		:host([selected]) {
 			border: 1px solid black;
+			/* TODO fazer uso de um mixin para que se possa passar vários atributos por fora do shadow DOM */
 		}
 		
 		::slotted(*) {
@@ -45,7 +46,7 @@
 		ready() {
 			super.ready();
 			
-			this.addEventListener("mousedown", XDraggable._onGrab);
+			this.addEventListener("mousedown", XDraggable._onDragstart);
 		}
 		
 		connectedCallback() {
@@ -91,7 +92,7 @@
 					reflectToAttribute : true,
 					observer : "_onChangeW"
 				},
-				minW : {
+				minw : {
 					type : Number,
 					value : 10,
 					reflectToAttribute : true
@@ -102,7 +103,7 @@
 					reflectToAttribute : true,
 					observer : "_onChangeH"
 				},
-				minH : {
+				minh : {
 					type : Number,
 					value : 10,
 					reflectToAttribute : true
@@ -125,13 +126,13 @@
 		}
 		
 		_onChangeW(w) {
-			this.w = Math.max(w, this.minW);
-			this.style.width = `${this.w+1}px`;
+			this.w = Math.max(w, this.minw);
+			this.style.width = `${this.w}px`;
 		}
 		
 		_onChangeH(h) {
-			this.h = Math.max(h, this.minH);
-			this.style.height = `${this.h+1}px`;
+			this.h = Math.max(h, this.minh);
+			this.style.height = `${this.h}px`;
 		}
 		
 		_onChangeZ(z) {
@@ -147,7 +148,7 @@
 				this.x = 0;
 			}
 			else if (newX+this.w > this.parentElement.offsetWidth) {
-				this.x = this.parentElement.offsetWidth - this.w - 1;
+				this.x = this.parentElement.offsetWidth - this.w;
 			}
 			else {
 				this.x = newX;
@@ -156,8 +157,8 @@
 			if (newY < 0) {
 				this.y = 0;
 			}
-			else if (newY+this.w > this.parentElement.offsetHeight) {
-				this.y = this.parentElement.offsetHeight - this.h - 1;
+			else if (newY+this.h > this.parentElement.offsetHeight) {
+				this.y = this.parentElement.offsetHeight - this.h;
 			}
 			else {
 				this.y = newY;
@@ -165,21 +166,21 @@
 		}
 		
 		//event listeners
-		static _onGrab(e) {
+		static _onDragstart(e) {
 			if (e.which === 1) {
 				e.stopPropagation();
 				
-				if (!this.selected && !e.ctrlKey && !e.shiftKey) {
+				if (!e.target.selected && !e.ctrlKey && !e.shiftKey) {
 					document.querySelectorAll("x-draggable[selected]")
 						.forEach(element => element.selected = false);
 				}
 				
-				this.selected = true;
+				e.target.selected = true;
 				
 				XDraggable._grabbed = {
-					x : this.x - e.clientX,
-					y : this.y - e.clientY,
-					target : this
+					x : e.target.x - e.clientX,
+					y : e.target.y - e.clientY,
+					target : e.target
 				};
 				document.addEventListener("mousemove", XDraggable._onDrag);
 			}
@@ -203,10 +204,11 @@
 			}
 		}
 		
-		static _onRelease(e) {
+		static _onDragend(e) {
 			if (XDraggable._grabbed && e.which === 1) {
 				e.preventDefault();
 				XDraggable._grabbed = null;
+				document.removeEventListener("mousemove", XDraggable._onDrag);
 			}
 		}
 	}
@@ -215,7 +217,7 @@
 	
 	
 	//post definitions
-	document.addEventListener("mouseup", XDraggable._onRelease);
+	document.addEventListener("mouseup", XDraggable._onDragend);
 	document.addEventListener("mousedown", XDraggable._onUnclick);
 	
 	XDraggable._grabbed = null;
