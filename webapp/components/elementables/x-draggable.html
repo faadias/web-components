@@ -38,14 +38,6 @@
 			return "x-draggable";
 		}
 		
-		static get minW() {
-			return 10;
-		}
-		
-		static get minH() {
-			return 10;
-		}
-		
 		constructor() {
 			super();
 		}
@@ -69,42 +61,56 @@
 				selected : {
 					type : Boolean,
 					value : false,
-					reflectToAttribute : true,
-					notify : true
+					reflectToAttribute : true
 				},
 				x : {
 					type : Number,
 					value : 0,
 					reflectToAttribute : true,
-					notify : true,
 					observer : "_onChangeX"
+				},
+				dx : {
+					type : Number,
+					value : 1,
+					reflectToAttribute : true
 				},
 				y : {
 					type : Number,
 					value : 0,
 					reflectToAttribute : true,
-					notify : true,
 					observer : "_onChangeY"
+				},
+				dy : {
+					type : Number,
+					value : 1,
+					reflectToAttribute : true
 				},
 				w : {
 					type : Number,
-					value : XDraggable.minW,
+					value : 20,
 					reflectToAttribute : true,
-					notify : true,
 					observer : "_onChangeW"
+				},
+				minW : {
+					type : Number,
+					value : 10,
+					reflectToAttribute : true
 				},
 				h : {
 					type : Number,
-					value : XDraggable.minH,
+					value : 20,
 					reflectToAttribute : true,
-					notify : true,
 					observer : "_onChangeH"
+				},
+				minH : {
+					type : Number,
+					value : 10,
+					reflectToAttribute : true
 				},
 				z : {
 					type : Number,
 					value : 0,
 					reflectToAttribute : true,
-					notify : true,
 					observer : "_onChangeZ"
 				}
 			};
@@ -119,13 +125,13 @@
 		}
 		
 		_onChangeW(w) {
-			w = Math.max(XDraggable.minW, w);
-			this.style.width = `${w+1}px`;
+			this.w = Math.max(w, this.minW);
+			this.style.width = `${this.w+1}px`;
 		}
 		
 		_onChangeH(h) {
-			h = Math.max(XDraggable.minH, h);
-			this.style.height = `${h+1}px`;
+			this.h = Math.max(h, this.minH);
+			this.style.height = `${this.h+1}px`;
 		}
 		
 		_onChangeZ(z) {
@@ -156,9 +162,6 @@
 			else {
 				this.y = newY;
 			}
-			
-			//if (this.x+dx >= 0 && this.x+dx+this.w <= this.parentElement.offsetWidth) this.x += dx;
-			//if (this.y+dy >= 0 && this.y+dy+this.h <= this.parentElement.offsetHeight) this.y += dy;
 		}
 		
 		//event listeners
@@ -188,8 +191,8 @@
 		
 		static _onDrag(e) {
 			if (XDraggable._grabbed && e.which === 1) {
-				let newX = ((e.clientX + XDraggable._grabbed.x)/XDraggable.minW | 0)*XDraggable.minW;
-				let newY = ((e.clientY + XDraggable._grabbed.y)/XDraggable.minH | 0)*XDraggable.minH;
+				let newX = ((e.clientX + XDraggable._grabbed.x)/XDraggable._grabbed.target.dx | 0)*XDraggable._grabbed.target.dx;
+				let newY = ((e.clientY + XDraggable._grabbed.y)/XDraggable._grabbed.target.dy | 0)*XDraggable._grabbed.target.dy;
 				
 				let dx = newX - XDraggable._grabbed.target.x; //target.x e target.y atualizados pela chamada do move abaixo
 				let dy = newY - XDraggable._grabbed.target.y;
