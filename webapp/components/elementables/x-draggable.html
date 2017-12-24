@@ -22,7 +22,7 @@
 		
 		:host([selected]) {
 			border: 1px solid black;
-			/* TODO fazer uso de um mixin para que se possa passar vários atributos por fora do shadow DOM */
+			/* TODO fazer uso de um mixin para que se possa passar vÃ¡rios atributos por fora do shadow DOM */
 		}
 		
 		::slotted(*) {
@@ -45,8 +45,7 @@
 		
 		ready() {
 			super.ready();
-			
-			this.addEventListener("mousedown", XDraggable._onDragstart);
+			this.addEventListener("mousedown", this.drag);
 		}
 		
 		connectedCallback() {
@@ -139,6 +138,51 @@
 			this.style.zIndex = z;
 		}
 		
+		//inner-use constants
+		static get GRAB_POINT_PADDING() {
+			/*
+			 * When the mouse leaves the parent and comes back, it immeaditely sets
+			 * the new grab point as the edge it entered plus/minus this padding.
+			 * This is to avoid the mouse-not-inside-element-while-grabbing glitch.
+			 *
+			 */
+			return 10;
+		}
+		
+		static get SCROLL_RATE() {
+			/*
+			 * The rate by which the window scrolls when dragging an element
+			 * beyond viewport limits.
+			 *
+			 */
+			return 10;
+		}
+		
+		static get SCROLL_TRIGGER_PADDING() {
+			/*
+			 * Scrolling during drag will be triggered when the mouse is near
+			 * the screen edges plus/minus this padding.
+			 *
+			 */
+			return 20;
+		}
+		
+		
+		//getters
+		get top() {
+			return this.y;
+		}
+		get bottom() {
+			return this.y+this.h;
+		}
+		get left() {
+			return this.x;
+		}
+		get right() {
+			return this.x+this.w;
+		}
+		
+		
 		//methods
 		move(dx, dy) {
 			let newX = this.x + dx;
@@ -165,62 +209,75 @@
 			}
 		}
 		
-		//event listeners
-		static _onDragstart(e) {
-			if (e.which === 1) {
-				e.stopPropagation();
-				
-				if (!e.target.selected && !e.ctrlKey && !e.shiftKey) {
-					document.querySelectorAll("x-draggable[selected]")
-						.forEach(element => element.selected = false);
-				}
-				
-				e.target.selected = true;
-				
-				XDraggable._grabbed = {
-					x : e.target.x - e.clientX,
-					y : e.target.y - e.clientY,
-					target : e.target
-				};
-				document.addEventListener("mousemove", XDraggable._onDrag);
+		drag(e) {
+			if (e.which !== 1) return;
+			
+			e.stopPropagation();
+			
+			let draggable = this;
+			
+			
+			/* deve ficar no pai */
+			if (!draggable.selected && !e.ctrlKey && !e.shiftKey) {
+				document.querySelectorAll("x-draggable[selected]")
+					.forEach(element => element.selected = false);
 			}
-		}
-		
-		static _onUnclick(e) {
-			document.querySelectorAll("x-draggable[selected]").forEach(element => element.selected = false);
-		}
-		
-		static _onDrag(e) {
-			if (XDraggable._grabbed && e.which === 1) {
-				let newX = ((e.clientX + XDraggable._grabbed.x)/XDraggable._grabbed.target.dx | 0)*XDraggable._grabbed.target.dx;
-				let newY = ((e.clientY + XDraggable._grabbed.y)/XDraggable._grabbed.target.dy | 0)*XDraggable._grabbed.target.dy;
+			
+			draggable.selected = true;
+			/* ***************** */
+			
+			
+			let lastPageX = e.pageX;
+			let lastPageY = e.pageY;
+			let dragging = function(e) {
+				if (e.which !== 1) return;
 				
-				let dx = newX - XDraggable._grabbed.target.x; //target.x e target.y atualizados pela chamada do move abaixo
-				let dy = newY - XDraggable._grabbed.target.y;
+				let dx = ((e.pageX - lastPageX)/draggable.dx|0)*draggable.dx;
+				let dy = ((e.pageY - lastPageY)/draggable.dy|0)*draggable.dy;
 				
+				//min and max used for when mouse leaves grid (parent)
+				let parentRect = draggable.parentElement.getBoundingClientRect();
+				lastPageX = Math.min(Math.max(lastPageX+dx, (parentRect.left+window.scrollX+XDraggable.GRAB_POINT_PADDING)|0), (parentRect.right+window.scrollX-XDraggable.GRAB_POINT_PADDING)|0);
+				lastPageY = Math.min(Math.max(lastPageY+dy, (parentRect.top+window.scrollY+XDraggable.GRAB_POINT_PADDING)|0), (parentRect.bottom+window.scrollY-XDraggable.GRAB_POINT_PADDING)|0);
+				
+
 				//criar um x-sandbox para conter os x-draggables
-				//notificar o pai que há um evento de drag em andamento para ele tomar as providência de chamar o move em cada elemento selecionado (a seleção pertence ao pai)
+				//notificar o pai que hÃ¡ um evento de drag em andamento para ele tomar as providÃªncia de chamar o move em cada elemento selecionado (a seleÃ§Ã£o pertence ao pai)
 				document.querySelectorAll("x-draggable[selected]").forEach( element => element.move(dx, dy) );
+				
+				//scroll screen (after movement)
+				let draggableRect = draggable.getBoundingClientRect();
+				
+				let scrollX = 0;
+				if (draggableRect.right >= window.innerWidth-XDraggable.SCROLL_TRIGGER_PADDING) scrollX = XDraggable.SCROLL_RATE;
+				else if (draggableRect.left <= XDraggable.SCROLL_TRIGGER_PADDING) scrollX = -XDraggable.SCROLL_RATE;
+				
+				let scrollY = 0;
+				if (draggableRect.bottom >= window.innerHeight-XDraggable.SCROLL_TRIGGER_PADDING) scrollY = XDraggable.SCROLL_RATE;
+				else if (draggableRect.top <= XDraggable.SCROLL_TRIGGER_PADDING) scrollY = -XDraggable.SCROLL_RATE;
+				
+				window.scrollBy(scrollX,scrollY);
 			}
+			
+			window.addEventListener("mousemove", dragging);
+			
+			window.addEventListener("mouseup", function(e) {
+				if (e.which !== 1) return;
+				
+				e.preventDefault();
+				window.removeEventListener("mousemove", dragging);
+			});
 		}
 		
-		static _onDragend(e) {
-			if (XDraggable._grabbed && e.which === 1) {
-				e.preventDefault();
-				XDraggable._grabbed = null;
-				document.removeEventListener("mousemove", XDraggable._onDrag);
-			}
+		static _onDeselect(e) { //pertence ao pai, na verdade
+			document.querySelectorAll("x-draggable[selected]").forEach(element => element.selected = false);
 		}
 	}
 	
 	customElements.define(XDraggable.is, XDraggable);
 	
 	
-	//post definitions
-	document.addEventListener("mouseup", XDraggable._onDragend);
-	document.addEventListener("mousedown", XDraggable._onUnclick);
-	
-	XDraggable._grabbed = null;
+	document.addEventListener("mousedown", XDraggable._onDeselect); //Pertence ao pai, na verdade
 	</script>
 
 </dom-module>
