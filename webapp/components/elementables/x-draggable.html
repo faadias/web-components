@@ -45,7 +45,7 @@
 		
 		ready() {
 			super.ready();
-			this.addEventListener("mousedown", this.drag);
+			this.addEventListener("mousedown", this._draginit);
 		}
 		
 		connectedCallback() {
@@ -209,13 +209,12 @@
 			}
 		}
 		
-		drag(e) {
+		_draginit(e) {
 			if (e.which !== 1) return;
 			
 			e.stopPropagation();
 			
 			let draggable = this;
-			
 			
 			/* deve ficar no pai */
 			if (!draggable.selected && !e.ctrlKey && !e.shiftKey) {
@@ -240,23 +239,11 @@
 				lastPageX = Math.min(Math.max(lastPageX+dx, (parentRect.left+window.scrollX+XDraggable.GRAB_POINT_PADDING)|0), (parentRect.right+window.scrollX-XDraggable.GRAB_POINT_PADDING)|0);
 				lastPageY = Math.min(Math.max(lastPageY+dy, (parentRect.top+window.scrollY+XDraggable.GRAB_POINT_PADDING)|0), (parentRect.bottom+window.scrollY-XDraggable.GRAB_POINT_PADDING)|0);
 				
-
+				XDraggable.scrollScreen(draggable.getBoundingClientRect());
+				
 				//criar um x-sandbox para conter os x-draggables
-				//notificar o pai que há um evento de drag em andamento para ele tomar as providência de chamar o move em cada elemento selecionado (a seleção pertence ao pai)
+				//notificar o pai que há um evento de drag em andamento para ele tomar as providências de chamar o move em cada elemento selecionado (a seleção pertence ao pai)
 				document.querySelectorAll("x-draggable[selected]").forEach( element => element.move(dx, dy) );
-				
-				//scroll screen (after movement)
-				let draggableRect = draggable.getBoundingClientRect();
-				
-				let scrollX = 0;
-				if (draggableRect.right >= window.innerWidth-XDraggable.SCROLL_TRIGGER_PADDING) scrollX = XDraggable.SCROLL_RATE;
-				else if (draggableRect.left <= XDraggable.SCROLL_TRIGGER_PADDING) scrollX = -XDraggable.SCROLL_RATE;
-				
-				let scrollY = 0;
-				if (draggableRect.bottom >= window.innerHeight-XDraggable.SCROLL_TRIGGER_PADDING) scrollY = XDraggable.SCROLL_RATE;
-				else if (draggableRect.top <= XDraggable.SCROLL_TRIGGER_PADDING) scrollY = -XDraggable.SCROLL_RATE;
-				
-				window.scrollBy(scrollX,scrollY);
 			}
 			
 			window.addEventListener("mousemove", dragging);
@@ -269,8 +256,22 @@
 			});
 		}
 		
+		
 		static _onDeselect(e) { //pertence ao pai, na verdade
 			document.querySelectorAll("x-draggable[selected]").forEach(element => element.selected = false);
+		}
+		
+		
+		static scrollScreen(rect) {
+			let scrollX = 0;
+			if (rect.right >= window.innerWidth-XDraggable.SCROLL_TRIGGER_PADDING) scrollX = XDraggable.SCROLL_RATE;
+			else if (rect.left <= XDraggable.SCROLL_TRIGGER_PADDING) scrollX = -XDraggable.SCROLL_RATE;
+			
+			let scrollY = 0;
+			if (rect.bottom >= window.innerHeight-XDraggable.SCROLL_TRIGGER_PADDING) scrollY = XDraggable.SCROLL_RATE;
+			else if (rect.top <= XDraggable.SCROLL_TRIGGER_PADDING) scrollY = -XDraggable.SCROLL_RATE;
+			
+			window.scrollBy(scrollX,scrollY);
 		}
 	}
 	
