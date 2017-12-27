@@ -8,19 +8,66 @@
 		
 		:host {
 			position: absolute;
+			display: inline-block;
+			contain: content;
+			padding: calc(var(--holder-size) / 2);
+			
+			--holder-size: 6px;
+		}
+		
+		#content {
+			position: relative;
+			
 			display: inline-flex;
 			flex-direction: row;
 			justify-content: center;
 			align-items: center;
-			contain: content;
+			
 			box-sizing: border-box;
 			cursor: pointer;
 			user-select: none;
-			
 			border: 1px dashed lightgray;
 		}
 		
-		:host([selected]) {
+		#holders {
+			display: none;
+			position: absolute;
+			width: 100%;
+			height: 100%;
+		}
+		
+		#holders > .holder {
+			position: absolute;
+			display: inline-block;
+			background-color: black;
+			width: var(--holder-size);
+			height: var(--holder-size);
+		}
+		
+		#holders > .holder.top {
+			top: calc(var(--holder-size) / -2);
+		}
+		#holders > .holder.left {
+			left: calc(var(--holder-size) / -2);
+		}
+		#holders > .holder.right {
+			right: calc(var(--holder-size) / -2);
+		}
+		#holders > .holder.bottom {
+			bottom: calc(var(--holder-size) / -2);
+		}
+		#holders > .holder.center {
+			left: calc(50% + var(--holder-size) / -2);
+		}
+		#holders > .holder.middle {
+			top: calc(50% + var(--holder-size) / -2);
+		}
+		
+		:host([selected]) #holders {
+			display: block;
+		}
+		
+		:host([selected]) #content {
 			border: 1px solid black;
 			/* TODO fazer uso de um mixin para que se possa passar vários atributos por fora do shadow DOM */
 		}
@@ -30,7 +77,19 @@
 			pointer-events: none;
 		}
 		</style>
-		<slot></slot>
+		<div id="content">
+			<slot></slot>
+			<div id="holders">
+				<div class="holder top left"></div>
+				<div class="holder top center"></div>
+				<div class="holder top right"></div>
+				<div class="holder left middle"></div>
+				<div class="holder right middle"></div>
+				<div class="holder bottom left"></div>
+				<div class="holder bottom center"></div>
+				<div class="holder bottom right"></div>
+			</div>
+		</div>
 	</template>
 
 	<script>
@@ -117,21 +176,23 @@
 		}
 		
 		_onChangeX(x) {
-			this.style.left = `${x}px`;
+			let padding = parseInt(getComputedStyle(this).getPropertyValue("padding"));
+			this.style.left = `${x-padding}px`;
 		}
 		
 		_onChangeY(y) {
-			this.style.top = `${y}px`;
+			let padding = parseInt(getComputedStyle(this).getPropertyValue("padding"));
+			this.style.top = `${y-padding}px`;
 		}
 		
 		_onChangeW(w) {
 			this.w = Math.max(w, this.minw);
-			this.style.width = `${this.w}px`;
+			this.$.content.style.width = `${this.w}px`;
 		}
 		
 		_onChangeH(h) {
 			this.h = Math.max(h, this.minh);
-			this.style.height = `${this.h}px`;
+			this.$.content.style.height = `${this.h}px`;
 		}
 		
 		_onChangeZ(z) {
