@@ -15,18 +15,8 @@
 			--holder-size: 6px;
 		}
 		
-		#content {
+		#container {
 			position: relative;
-			
-			display: flex;
-			flex-direction: row;
-			justify-content: center;
-			align-items: center;
-			
-			box-sizing: border-box;
-			cursor: pointer;
-			user-select: none;
-			border: 1px dashed lightgray;
 		}
 		
 		#holders {
@@ -34,6 +24,8 @@
 			position: absolute;
 			width: 100%;
 			height: 100%;
+			left: 0;
+			top: 0;
 		}
 		
 		#holders > .holder {
@@ -90,6 +82,20 @@
 		
 		:host([selected]) #holders {
 			display: block;
+			overflow: visible;
+		}
+		
+		#content {
+			position: relative;
+			display: flex;
+			flex-direction: row;
+			justify-content: center;
+			align-items: center;
+			
+			box-sizing: border-box;
+			cursor: pointer;
+			user-select: none;
+			border: 1px dashed lightgray;
 		}
 		
 		:host([selected]) #content {
@@ -97,17 +103,26 @@
 			/* TODO fazer uso de um mixin para que se possa passar vários atributos por fora do shadow DOM */
 		}
 		
-		::slotted(*) {
+		#content ::slotted(*) {
 			cursor: inherit;
 			pointer-events: none;
 			max-width: 100%;
 			max-height: 100%;
 			overflow: hidden;
+			
+			-webkit-touch-callout: none; /* iOS Safari */
+			-webkit-user-select: none; /* Safari */
+			-khtml-user-select: none; /* Konqueror HTML */
+			-moz-user-select: none; /* Firefox */
+			-ms-user-select: none; /* Internet Explorer/Edge */
+			user-select: none;
 		}
 		</style>
-		<div id="content">
-			<slot></slot>
-			<div id="holders">
+		<div id="container">
+			<div id="content">
+				<slot></slot>
+			</div>
+				<div id="holders">
 				<div class="holder top left vertical horizontal"></div>
 				<div class="holder top center vertical"></div>
 				<div class="holder top right vertical horizontal"></div>
@@ -217,12 +232,12 @@
 		}
 		
 		_onChangeX(x) {
-			let padding = parseInt(getComputedStyle(this).getPropertyValue("padding"));
+			let padding = parseInt(getComputedStyle(this).getPropertyValue("--holder-size"))/2|0;
 			this.style.left = `${x-padding}px`;
 		}
 		
 		_onChangeY(y) {
-			let padding = parseInt(getComputedStyle(this).getPropertyValue("padding"));
+			let padding = parseInt(getComputedStyle(this).getPropertyValue("--holder-size"))/2|0;
 			this.style.top = `${y-padding}px`;
 		}
 		
