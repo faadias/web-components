@@ -18,7 +18,7 @@
 		#content {
 			position: relative;
 			
-			display: inline-flex;
+			display: flex;
 			flex-direction: row;
 			justify-content: center;
 			align-items: center;
@@ -63,6 +63,31 @@
 			top: calc(50% + var(--holder-size) / -2);
 		}
 		
+		#holders > .holder.top.left {
+			cursor: nw-resize;
+		}
+		#holders > .holder.top.center {
+			cursor: n-resize;
+		}
+		#holders > .holder.top.right {
+			cursor: ne-resize;
+		}
+		#holders > .holder.middle.left {
+			cursor: w-resize;
+		}
+		#holders > .holder.middle.right {
+			cursor: e-resize;
+		}
+		#holders > .holder.bottom.left {
+			cursor: sw-resize;
+		}
+		#holders > .holder.bottom.center {
+			cursor: s-resize;
+		}
+		#holders > .holder.bottom.right {
+			cursor: se-resize;
+		}
+		
 		:host([selected]) #holders {
 			display: block;
 		}
@@ -75,19 +100,22 @@
 		::slotted(*) {
 			cursor: inherit;
 			pointer-events: none;
+			max-width: 100%;
+			max-height: 100%;
+			overflow: hidden;
 		}
 		</style>
 		<div id="content">
 			<slot></slot>
 			<div id="holders">
-				<div class="holder top left"></div>
-				<div class="holder top center"></div>
-				<div class="holder top right"></div>
-				<div class="holder left middle"></div>
-				<div class="holder right middle"></div>
-				<div class="holder bottom left"></div>
-				<div class="holder bottom center"></div>
-				<div class="holder bottom right"></div>
+				<div class="holder top left vertical horizontal"></div>
+				<div class="holder top center vertical"></div>
+				<div class="holder top right vertical horizontal"></div>
+				<div class="holder middle left horizontal"></div>
+				<div class="holder middle right horizontal"></div>
+				<div class="holder bottom left vertical horizontal"></div>
+				<div class="holder bottom center vertical"></div>
+				<div class="holder bottom right vertical horizontal"></div>
 			</div>
 		</div>
 	</template>
@@ -105,6 +133,9 @@
 		ready() {
 			super.ready();
 			this.addEventListener("mousedown", this._draginit);
+			for (let holder of this.$.holders.children) {
+				holder.addEventListener("mousedown", this._resizeinit.bind(this));
+			}
 		}
 		
 		connectedCallback() {
@@ -150,6 +181,11 @@
 					reflectToAttribute : true,
 					observer : "_onChangeW"
 				},
+				dw : {
+					type : Number,
+					value : 1,
+					reflectToAttribute : true
+				},
 				minw : {
 					type : Number,
 					value : 10,
@@ -160,6 +196,11 @@
 					value : 20,
 					reflectToAttribute : true,
 					observer : "_onChangeH"
+				},
+				dh : {
+					type : Number,
+					value : 1,
+					reflectToAttribute : true
 				},
 				minh : {
 					type : Number,
@@ -317,6 +358,115 @@
 			});
 		}
 		
+		_resizeinit(e) {
+			if (e.which !== 1) return;
+			
+			e.stopPropagation();
+			
+			let draggable = this;
+			let holder = e.target;
+			
+			const mouse = {
+				x : e.pageX,
+				y : e.pageY,
+				dx : 0,
+				dy : 0
+			};
+			
+			const draggableOriginalCoords = {
+				x : draggable.x,
+				y : draggable.y,
+				w : draggable.w,
+				h : draggable.h
+			};
+			
+			let resizing = function(e) {
+				if (e.which !== 1) return;
+				
+				const isVertical = holder.classList.contains("vertical");
+				const isHorizontal = holder.classList.contains("horizontal");
+				const isTop = holder.classList.contains("top");
+				const isLeft = holder.classList.contains("left");
+				
+				mouse.dx = e.pageX - mouse.x;
+				mouse.dy = e.pageY - mouse.y;
+				
+				let dw = isHorizontal ? (mouse.dx/draggable.dw|0)*draggable.dw : 0;
+				let dh = isVertical ? (mouse.dy/draggable.dh|0)*draggable.dh : 0;
+				let dx = 0;
+				let dy = 0;
+				
+				if (isLeft) {
+					dx = dw;
+					dw = -dw;
+				}
+				
+				if (isTop) {
+					dy = dh;
+					dh = -dh;
+				}
+				
+				let newX = draggableOriginalCoords.x + dx;
+				let newY = draggableOriginalCoords.y + dy;
+				let newW = draggableOriginalCoords.w + dw;
+				let newH = draggableOriginalCoords.h + dh;
+				
+				if (newX < 0) {
+					newX = 0;
+					newW = draggable.x+draggable.w;
+				}
+				else if (newX+newW > draggable.parentElement.offsetWidth) {
+					newX = draggable.x;
+					newW = draggable.parentElement.offsetWidth - draggable.x;
+				}
+				
+				
+				if (newY < 0) {
+					newY = 0;
+					newH = draggable.y+draggable.h;
+				}
+				else if (newY+newH > draggable.parentElement.offsetHeight) {
+					newY = draggable.y;
+					newH = draggable.parentElement.offsetHeight - draggable.y;
+				}
+
+				if (isLeft && dw < 0) {
+					if (draggable.w === draggable.minw) {
+						newX = draggable.x;
+						newW = draggable.w;
+					}
+					else if (newW <= draggable.minw) {
+						newX = draggable.x+draggable.w-draggable.minw;						
+					}
+				}
+				
+				if (isTop && dh < 0) {
+					if (draggable.h === draggable.minh) {
+						newY = draggable.y;
+						newH = draggable.h;
+					}
+					else if (newH <= draggable.minh) {
+						newY = draggable.y+draggable.h-draggable.minh;	
+					}
+				}
+				
+				draggable.x = newX;
+				draggable.y = newY;
+				draggable.w = newW;
+				draggable.h = newH;
+				
+				XDraggable.scrollScreen(draggable.getBoundingClientRect());
+			}
+			
+			window.addEventListener("mousemove", resizing);
+			
+			window.addEventListener("mouseup", function(e) {
+				if (e.which !== 1) return;
+				
+				e.preventDefault();
+				window.removeEventListener("mousemove", resizing);
+			});
+		}
 		
 		static _onDeselect(e) { //pertence ao pai, na verdade
 			document.querySelectorAll("x-draggable[selected]").forEach(element => element.selected = false);
