@@ -20,6 +20,14 @@
 		padding: 0;
 	}
 	
+	main {
+		display: flex;
+		justify-content: center;
+		background-color: rgb(238, 238, 238);
+		width: 100%;
+		height: 100%;
+	}
+	
 	.page {
 		position: relative;
 		box-sizing: border-box;
@@ -30,7 +38,9 @@
 		height: var(--page-height);
 		padding: var(--page-margins);
 		
-		background-color: wheat;
+		margin: 40px 0;
+		background-color: antiquewhite;
+		box-shadow: lightgrey 6px 6px 6px -1px;
 	}
 	
 	.grid {
@@ -41,7 +51,7 @@
 		height: 1040px; /* calcular baseado no step */
 		overflow: visible; /* holders aparecem mesmo com objeto no canto */
 		
-		background-color: aliceblue;
+		background-color: rgb(250,250,250);
 	}
 	
 	label {
@@ -60,12 +70,14 @@
 	</style>
 </head>
 <body
+	><main
 	><div class="page"
 		><div class="grid"
 			><x-draggable x="100" y="100" w="300" h="300" dx="30" dy="30" dw="10" dh="10"><label>I move 30x30</label></x-draggable
 			><x-draggable x="10" y="10" w="80" h="80" dx="10" dy="10" dw="10" dh="10"><label>I move 10x10</label></x-draggable
 		></div
-	></div 
+	></div
+	></main 
 ></body>
 <script>
 function createBackground(step) {

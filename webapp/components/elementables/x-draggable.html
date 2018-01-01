@@ -369,11 +369,12 @@
 			
 			window.addEventListener("mousemove", dragging);
 			
-			window.addEventListener("mouseup", function(e) {
+			window.addEventListener("mouseup", function removeDragging(e) {
 				if (e.which !== 1) return;
 				
 				e.preventDefault();
 				window.removeEventListener("mousemove", dragging);
+				window.removeEventListener("mouseup", removeDragging);
 			});
 		}
 		
@@ -479,11 +480,12 @@
 			
 			window.addEventListener("mousemove", resizing);
 			
-			window.addEventListener("mouseup", function(e) {
+			window.addEventListener("mouseup", function removeResizing(e) {
 				if (e.which !== 1) return;
 				
 				e.preventDefault();
 				window.removeEventListener("mousemove", resizing);
+				window.removeEventListener("mouseup", removeResizing);
 			});
 		}
 		
