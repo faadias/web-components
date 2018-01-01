@@ -356,7 +356,7 @@
 				lastPageX = Math.min(Math.max(lastPageX+dx, (parentRect.left+window.scrollX+XDraggable.GRAB_POINT_PADDING)|0), (parentRect.right+window.scrollX-XDraggable.GRAB_POINT_PADDING)|0);
 				lastPageY = Math.min(Math.max(lastPageY+dy, (parentRect.top+window.scrollY+XDraggable.GRAB_POINT_PADDING)|0), (parentRect.bottom+window.scrollY-XDraggable.GRAB_POINT_PADDING)|0);
 				
-				XDraggable.scrollScreen(draggable.getBoundingClientRect());
+				XDraggable.scrollScreen(e);
 				
 				//criar um x-sandbox para conter os x-draggables
 				//notificar o pai que há um evento de drag em andamento para ele tomar as providências de chamar o move em cada elemento selecionado (a seleção pertence ao pai)
@@ -470,7 +470,7 @@
 				draggable.w = newW;
 				draggable.h = newH;
 				
-				XDraggable.scrollScreen(draggable.getBoundingClientRect());
+				XDraggable.scrollScreen(e);
 			}
 			
 			window.addEventListener("mousemove", resizing);
@@ -488,14 +488,23 @@
 		}
 		
 		
-		static scrollScreen(rect) {
+		static scrollScreen(e) {
 			let scrollX = 0;
-			if (rect.right >= window.innerWidth-XDraggable.SCROLL_TRIGGER_PADDING) scrollX = XDraggable.SCROLL_RATE;
-			else if (rect.left <= XDraggable.SCROLL_TRIGGER_PADDING) scrollX = -XDraggable.SCROLL_RATE;
-			
 			let scrollY = 0;
-			if (rect.bottom >= window.innerHeight-XDraggable.SCROLL_TRIGGER_PADDING) scrollY = XDraggable.SCROLL_RATE;
-			else if (rect.top <= XDraggable.SCROLL_TRIGGER_PADDING) scrollY = -XDraggable.SCROLL_RATE;
+			
+			if (e.clientX >= window.innerWidth-XDraggable.SCROLL_TRIGGER_PADDING) {
+				scrollX = XDraggable.SCROLL_RATE;
+			}
+			else if (e.clientX <= XDraggable.SCROLL_TRIGGER_PADDING) {
+				scrollX = -XDraggable.SCROLL_RATE;
+			}
+			
+			if (e.clientY >= window.innerHeight-XDraggable.SCROLL_TRIGGER_PADDING) {
+				scrollY = XDraggable.SCROLL_RATE;
+			}
+			else if (e.clientY <= XDraggable.SCROLL_TRIGGER_PADDING) {
+				scrollY = -XDraggable.SCROLL_RATE;
+			}
 			
 			window.scrollBy(scrollX,scrollY);
 		}
